@@ -1,0 +1,135 @@
+%Name: Jeremy Hong
+%Date: 1/22/2015
+%Class: EE 4800/6800 Intro to Electronic Warfare
+%Lab 1
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Clean up
+clear
+clc
+%
+%Constants
+%
+c = 3*10^8;          %Speed of Light 3e8 m/sec
+k = 1.38*10^-23;     %Boltzmann's constant 1.38e-23 watt-second/Kelvin
+T_0 = 290;           %Standard reference temperature T_0 = 270 Kelvin
+R_E = 6371000;       %radius of the Earth R_E = 6371 km
+k_r = 4/3;           %refraction factor k_r = 4/3
+R_RT_test = 75000;   %Test radar-to-target range R_RT_test = 75 km
+%
+%Radar Characteristics
+%
+
+P_R = 125000;      %Peak transmit power P_R = 125 kW
+G_RT = 36;         %Mainbeam gain G_RT = 36 dBi
+f_c = 6000000000;  %Carrier Frequency f_c = 6 GHz
+G_sp = 30;         %Signal processing gain G_sp = 30       
+G_I = 32;          %Integration gain G_I = 32
+F_R = 7;           %Receiver noise figure F_R = 7 dB
+B_R = 30000000;    %Receiver processing bandwidth B_R = 30 MHz
+L_R = 9;           %Total radar related losses L_R = 9 dB
+SNR_dt = 14;       %Detection threshold SNR_dt = 14 dB
+h_R = 3;           %Height h_R = 3 meters
+%
+%Target Characteristics
+%
+h_T = 500;         %Altitude h_T = 500 meters
+sigma_radar = 0;   %radar cross section sigma_radar = 0 dBsm
+%Pre-Calculations
+%
+Wavelength = c/f_c;%Wavelength meters (m)
+%
+%Absolute Values
+%
+G_RT = 10^(G_RT/10);
+F_R = 10^(F_R/10);
+L_R = 10^(L_R/10);
+SNR_dt = 10^(SNR_dt/10);
+sigma_radar = 10^(sigma_radar/10);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%Calculations
+%
+%Recieved Single Pulse Target Signal Power
+S = (P_R*(G_RT)^2*Wavelength^2*sigma_radar)/((4*pi)^3*(R_RT_test)^4*L_R);
+%Conversion to dB
+S_dB = 10*log10(S);
+fprintf('Recieved single pulse target signal power: %d Watts \n',S);
+fprintf('Recieved single pulse target signal power: %3.4f dBW \n\n',S_dB);
+%Radar reciever thermal noise power (N)
+N = F_R*k*T_0*B_R;
+%Conversion to dB
+N_dB = 10*log10(N);
+fprintf('Reciever Thermal Noise: %d Watts \n',N);
+fprintf('Reciever Thermal Noise: %3.4f dBW \n\n',N_dB);
+%Plot (1)
+range1 = 0:1:150000;
+%Signal Power
+S_Plot = (P_R.*(G_RT).^2*Wavelength.^2.*sigma_radar)./((4.*pi).^3.*(range1).^4.*L_R);
+%Conversion to dB
+S_Plot_dB = 10*log10(S_Plot);
+plot(range1,S_Plot_dB)
+hold on
+%Noise Power 
+N_Plot = F_R*k*T_0*B_R;
+%Conversion to dB
+N_dB_Plot = ones(1,150001)*10*log10(N_Plot);
+plot(range1,N_dB_Plot)
+%Legend
+legend('Signal (S)','Thermal Noise (N)')
+%Set Axis like plot 2-7
+axis([0 150000 -175 80])
+%Labels
+title('S and N vs radar-to-target range') 
+ylabel('Signal-to-Noise Ratio (dB)')
+xlabel('Radar-to-target range (m)')
+%
+%Compute the single-pulse target signal-to-noise ratio
+SNR = S*G_sp/N;
+%Conversion to dB
+SNR_dB = 10*log10(SNR);
+fprintf('Single Pulse signal-to-noise Ratio: %3.4f \n',SNR);
+fprintf('Single Pulse signal-to-noise Ratio: %3.4f dB \n\n',SNR_dB);
+%Compute the multiple pulse target signal-to-noise ratio
+MSNR = (P_R*(G_RT)^2*Wavelength^2*sigma_radar*G_sp*G_I)/((4*pi)^3*R_RT_test^4*F_R*k*T_0*B_R*L_R);
+%Conversion to dB
+MSNR_dB = 10*log10(MSNR);
+fprintf('Multiple Pulse signal-to-noise Ratio: %3.4f \n',MSNR);
+fprintf('Multiple Pulse signal-to-noise Ratio: %3.4f dB \n\n',MSNR_dB);
+%Plot (2)
+figure(2)
+Range2 = 0:1:150000;
+%Plot the Multiple pulse target SNR
+MSNR_Plot = (P_R.*(G_RT).^2.*Wavelength.^2.*sigma_radar.*G_sp.*G_I)./((4.*pi).^3.*Range2.^4.*F_R.*k.*T_0.*B_R.*L_R);
+%Conversion to dB
+MSNR_Plot_dB = 10.*log10(MSNR_Plot);
+plot(Range2,MSNR_Plot_dB)
+hold on
+%Plot the SNR_dt
+SNR_dt_Plot = ones(1,150001)*10*log10(SNR_dt);
+plot(Range2,SNR_dt_Plot,':')
+%Plot the SNR
+SNR_Plot = (P_R.*G_RT.^2.*Wavelength.^2.*sigma_radar.*G_sp)./((4.*pi).^3.*Range2.^4.*F_R.*k.*T_0.*B_R.*L_R);
+%Conversion to dB
+SNR_Plot_dB = 10.*log10(SNR_Plot);
+plot(Range2,SNR_Plot_dB,'--')
+%Multiple pulse target SNR, SNR_dt, and SNR
+%Legend
+legend('(S/N)_n','SNR_d_t,','S/N')
+%Set Axis like plot 3-13
+axis([0 150000 -20 80])
+%Labels
+title('Received (S/N)_n, SNR_d_t, and (S/N) vs. the radar-to-target range') 
+ylabel('S/N (dB)')
+xlabel('Radar-to-target range (m)')
+%
+%Compute the radar detection (R_dt)
+R_dt = ((P_R*(G_RT)^2*Wavelength^2*sigma_radar*G_sp*G_I)/((4*pi)^3*SNR_dt*F_R*k*T_0*B_R*L_R))^(1/4);
+fprintf('Radar detection range: %3.3f meters \n',R_dt);
+%Compute the radar line-of-sight (R_LOS)
+R_hC = sqrt(2*k_r*R_E*h_R+h_R^2);
+R_hT = sqrt(2*k_r*R_E*h_T+h_T^2);
+R_LOS = R_hC + R_hT;
+fprintf('Radar line of sight: %3.3f meters \n',R_LOS);
+%Radar is not LOS limited because R_RT < R_LOS
+
