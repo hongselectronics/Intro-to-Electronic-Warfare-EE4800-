@@ -19,16 +19,16 @@ R_RT_test = 75000;   %Test radar-to-target range R_RT_test = 75 km
 %Radar Characteristics
 %
 
-P_R = 125000;      %Peak transmit power P_R = 125 kW
-G_RT = 36;         %Mainbeam gain G_RT = 36 dBi
-f_c = 6000000000;  %Carrier Frequency f_c = 6 GHz
-G_sp = 30;         %Signal processing gain G_sp = 30       
-G_I = 32;          %Integration gain G_I = 32
-F_R = 7;           %Receiver noise figure F_R = 7 dB
-B_R = 30000000;    %Receiver processing bandwidth B_R = 30 MHz
-L_R = 9;           %Total radar related losses L_R = 9 dB
-SNR_dt = 14;       %Detection threshold SNR_dt = 14 dB
-h_R = 3;           %Height h_R = 3 meters
+P_R = 125000;        %Peak transmit power P_R = 125 kW
+G_RT = 36;           %Mainbeam gain G_RT = 36 dBi
+f_c = 6000000000;    %Carrier Frequency f_c = 6 GHz
+G_sp = 30;           %Signal processing gain G_sp = 30       
+G_I = 32;            %Integration gain G_I = 32
+F_R = 7;             %Receiver noise figure F_R = 7 dB
+B_R = 30000000;      %Receiver processing bandwidth B_R = 30 MHz
+L_R = 9;             %Total radar related losses L_R = 9 dB
+SNR_dt = 14;         %Detection threshold SNR_dt = 14 dB
+h_R = 3;             %Height h_R = 3 meters
 %
 %Target Characteristics
 %
@@ -49,11 +49,11 @@ sigma_radar = 10^(sigma_radar/10);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %User Inputs
-G_RWR = input('Enter the antenna gain in the direction of the radar in dBi: ')
-F_RWR = input('Enter the receiver noise figure in dB: ')
-B_RWR = input('Enter the receiver bandwidth in GHz: ')
-L_RWR = input('Enter the total radar warning receiver related losses in dB: ')
-SNR_dtRWR = input('Enter the radar warning reciever detection threshold in dB ')
+G_RWR = input('Enter the antenna gain in the direction of the radar in dBi: ');
+F_RWR = input('Enter the receiver noise figure in dB: ');
+B_RWR = input('Enter the receiver bandwidth in GHz: ');
+L_RWR = input('Enter the total radar warning receiver related losses in dB: ');
+SNR_dtRWR = input('Enter the radar warning reciever detection threshold in dB: ');
 
 %Conversions:
 G_RWR_absolute = 10^(G_RWR/10);
@@ -63,67 +63,68 @@ L_RWR_absolute = 10^(L_RWR/10);
 SNR_dtRWR_absolute = 10^(SNR_dtRWR/10);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Calculations
-%
+%%
 %Compute the recieved single-pulse radar signal power (S_RWR) at R_RT_test
-S_RWR = (P_R*G_RT*G_RWR*Wavelength^2)/((4*pi)^2*R_RT^2*L_RWR);
+S_RWR = (P_R*G_RT*G_RWR*Wavelength^2)/((4*pi)^2*R_RT_test^2*L_RWR);
 S_RWR_dB = 10*log10(S_RWR);
 %display
 fprintf('Recieved single-pulse radar signal power: %d Watts\n',S_RWR)
 fprintf('Recieved single-pulse radar signal power: %3.4f dBW\n',S_RWR_dB)
-%
+%%
 %Compute the radar warning reciever thermal noise power (N_RWR) 
 N_RWR = F_RWR*k*T_0*B_RWR;
 N_RWR_dB = 10*log10(N_RWR);
 %display
 fprintf('Radar warning reciever thermal noise power: %d Watts\n',N_RWR)
 fprintf('Radar warning reciever thermal noise power" %3.4f dBW\n',N_RWR_dB)
-%
+%%
 %Plot (1)
 range1 = 0:1:150000;
 %Signal Power
-S_Plot = (P_R.*(G_RT).^2*Wavelength.^2.*sigma_radar)./((4.*pi).^3.*(range1).^4.*L_R);
+S_RWR_Plot = (P_R*G_RT*G_RWR*Wavelength^2)./((4*pi).^2*range1.^2*L_RWR);
 %Conversion to dB
-S_Plot_dB = 10*log10(S_Plot);
-plot(range1,S_Plot_dB)
+S_RWR_Plot_dB = 10*log10(S_RWR_Plot);
+plot(range1,S_RWR_Plot_dB)
 hold on
 %Noise Power 
-N_Plot = F_R*k*T_0*B_R;
+N_RWR_Plot = F_R*k*T_0*B_R;
 %Conversion to dB
-N_dB_Plot = ones(1,150001)*10*log10(N_Plot);
-plot(range1,N_dB_Plot)
+N_RWR_dB_Plot = ones(1,150001)*10*log10(N_RWR_Plot);
+plot(range1,N_RWR_dB_Plot,'--')
 %Legend
-legend('Signal (S)','Thermal Noise (N)')
+legend('SRWR','NRWR')
 %Set Axis like plot 2-7
 axis([0 150000 -175 80])
 %Labels
-title('S and N vs radar-to-target range') 
-ylabel('Signal-to-Noise Ratio (dB)')
-xlabel('Radar-to-target range (m)')
-%
+title('Thermal noise power vs radar-to-target range') 
+ylabel('Power (dBW)')
+xlabel('Radar-to-target range/RWR (m)')
+%%
 %Compute the single-pulse radar signal-to-noise ratio (S/N)_RWR at
 %R_RT_test
-SNR_RWR = (P_R*G_RT*G_RWR*Wavelength^2)/((4*pi)^2*R_RT^2*F_RWR*k*T_0*B_RWR*L_RWR);
+SNR_RWR = (P_R*G_RT*G_RWR*Wavelength^2)/((4*pi)^2*R_RT_test^2*F_RWR*k*T_0*B_RWR*L_RWR);
 SNR_RWR_dB = 10*log10(SNR_RWR);
 fprintf('Single-pulse radar signal-to-noise ratio: %d\n',SNR_RWR);
 fprintf('Single-pulse radar signal-to-noise ratio: %3.4f dB\n',SNR_RWR_dB);
+%%
 %Plot (2)
 figure(2)
 Range2 = 0:1:150000;
-%Plot the SNR_dt
-SNR_dt_Plot = ones(1,150001)*10*log10(SNR_dt);
-plot(Range2,SNR_dt_Plot,':')
+%Plot the SNR_dtRWR
+SNR_dtRWR_Plot = ones(1,150001)*10*log10(SNR_dtRWR);
+plot(Range2,SNR_dtRWR_Plot,':')
 %Plot the SNR
-SNR_Plot = (P_R.*G_RT.^2.*Wavelength.^2.*sigma_radar.*G_sp)./((4.*pi).^3.*Range2.^4.*F_R.*k.*T_0.*B_R.*L_R);
+SNR_RWR_Plot = (P_R*G_RT*G_RWR*Wavelength^2)./((4*pi)^2*Range2.^2*F_RWR*k*T_0*B_RWR*L_RWR);
 %Conversion to dB
-SNR_Plot_dB = 10.*log10(SNR_Plot);
-plot(Range2,SNR_Plot_dB,'--')
+SNR_RWR_Plot_dB = 10.*log10(SNR_RWR_Plot);
+plot(Range2,SNR_RWR_Plot_dB,'--')
 %Multiple pulse target SNR, SNR_dt, and SNR
 %Legend
-legend('(S/N)_n','SNR_d_t,','S/N')
+legend('SNR_dtRWR','SNR_RWR')
 %Set Axis like plot 3-13
 axis([0 150000 -20 80])
 %Labels
-title('Received (S/N)_n, SNR_d_t, and (S/N) vs. the radar-to-target range') 
+title('S_RWR & SNR_dtRWR vs. the radar-to-target/RWR range') 
 ylabel('S/N (dB)')
 xlabel('Radar-to-target range (m)')
-%
+%%
