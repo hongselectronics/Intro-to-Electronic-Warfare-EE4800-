@@ -114,17 +114,24 @@ Range2 = 0:1:150000;
 SNR_dtRWR_Plot = ones(1,150001)*10*log10(SNR_dtRWR);
 plot(Range2,SNR_dtRWR_Plot,':')
 %Plot the SNR
+hold on
 SNR_RWR_Plot = (P_R*G_RT*G_RWR*Wavelength^2)./((4*pi)^2*Range2.^2*F_RWR*k*T_0*B_RWR*L_RWR);
 %Conversion to dB
 SNR_RWR_Plot_dB = 10.*log10(SNR_RWR_Plot);
 plot(Range2,SNR_RWR_Plot_dB,'--')
 %Multiple pulse target SNR, SNR_dt, and SNR
 %Legend
-legend('SNR_dtRWR','SNR_RWR')
+legend('SNR_d_t_R_W_R','SNR_R_W_R')
 %Set Axis like plot 3-13
 axis([0 150000 -20 80])
 %Labels
-title('S_RWR & SNR_dtRWR vs. the radar-to-target/RWR range') 
-ylabel('S/N (dB)')
-xlabel('Radar-to-target range (m)')
+title('S_R_W_R & SNR_d_t_R_W_R vs. the radar-to-target/RWR range') 
+ylabel('Power (dB)')
+xlabel('Radar-to-target/RWR Range (m)')
 %%
+%Compute the minimum detectable signal sensitivity (S_min_dt)
+S_min_dt = N_RWR*SNR_dt_RWR;
+S_min_dt_dB = 10*log10(S_min_dt);
+fprintf('Minimum detectable signal sensitivity: %d Watts\n',S_min_dt)
+fprintf('Minimum detectable signal sensitivity: %4.3f dBW\n',S_min_dt_dB)
+
