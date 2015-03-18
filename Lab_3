@@ -1,0 +1,206 @@
+%Name: Jeremy Hong and Alexander Kinkade
+%Date: 3/17/2015
+%Class: EE 4800/6800 Intro to Electronic Warfare
+%Lab 3
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Clean up
+clear
+clc
+%
+%Constants from lab 1 & 2
+%
+c = 3*10^8;          %Speed of Light 3e8 m/sec
+k = 1.38*10^-23;     %Boltzmann's constant 1.38e-23 watt-second/Kelvin
+T_0 = 290;           %Standard reference temperature T_0 = 290 Kelvin
+R_E = 6371000;       %radius of the Earth R_E = 6371 km
+k_r = 4/3;           %refraction factor k_r = 4/3
+R_RT_test = 75000;   %Test radar-to-target range R_RT_test = 75 km
+%
+%Radar Characteristics from lab 1 & 2
+%
+
+P_R = 125000;        %Peak transmit power P_R = 125 kW
+G_RT = 36;           %Mainbeam gain G_RT = 36 dBi
+f_c = 6000000000;    %Carrier Frequency f_c = 6 GHz
+G_sp = 30;           %Signal processing gain G_sp = 30       
+G_I = 32;            %Integration gain G_I = 32
+F_R = 7;             %Receiver noise figure F_R = 7 dB
+B_R = 30000000;      %Receiver processing bandwidth B_R = 30 MHz
+L_R = 9;             %Total radar related losses L_R = 9 dB
+SNR_dt = 14;         %Detection threshold SNR_dt = 14 dB
+h_R = 3;             %Height h_R = 3 meters
+%
+%Target Characteristics
+%
+h_T = 500;         %Altitude h_T = 500 meters
+sigma_radar = 0;   %radar cross section sigma_radar = 0 dBsm
+%
+%Self-Protection Jammer Characteristics
+%
+%P_J = 10;            %Peak transmit power P_J = 10 W
+%G_JR = 2;            %Transmit antenna gain G_JR = 2 dBi
+%B_J = 150;           %Jammer noise bandwidth B_J 150 MHz
+%L_J = 13;            %Total Jammer-related losses L_J 13 dB
+%
+%Pre-Calculations
+%
+Wavelength = c/f_c;%Wavelength meters (m)
+%
+%Absolute Values
+%
+G_RT = 10^(G_RT/10);
+F_R = 10^(F_R/10);
+L_R = 10^(L_R/10);
+SNR_dt = 10^(SNR_dt/10);
+sigma_radar = 10^(sigma_radar/10);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+disp('Electronic Warfare Lab 3 Calculator')
+%
+%User Inputs
+fprintf('\n Input the characteristics of the self protection jammer')
+P_J = input('\nEnter the peak transmit power in W: ');                                   %10 W
+G_JR = input('Enter the transmit antenna gain in the direction of the radar in dBi: '); %2 dBi
+B_J = input('Enter the jammer noise bandwidth in MHz: ');                              %150 MHz
+L_J = input('Enter the total jammer-related losses in dB: ');                          %13 dB
+
+%Conversions:
+P_J_absolute = P_J;
+G_JR_absolute = 10^(G_JR/10);
+B_J = B_J*10^6;
+L_J_absolute = 10^(L_J/10);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Spacing
+%Calculations
+%%
+%Compute the recieved jamming signal power (J) at R_RT_test
+J_R = (P_J_absolute*G_JR_absolute*G_RT*Wavelength^2)/((4*pi)^2*R_RT_test^2*L_J_absolute);
+J_R_dB = 10*log10(J_R);
+%display
+fprintf('\n\nRecieved jamming signal power: %d Watts\n',J_R)
+fprintf('Recieved jamming signal power: %3.4f dBW\n',J_R_dB)
+%%
+%
+%Plot (1)
+range1 = 0:1:150000;
+hold on
+%single-pulse target signal power
+J_R_Plot = (P_R*G_RT^2*Wavelength^2*sigma_radar)./((4*pi).^3*range1.^4*L_R);
+%conversion to dB
+J_R_Plot_dB = 10*log10(J_R_Plot);
+plot(range1,J_R_Plot_dB,'r')
+%radar reciever Noise Power 
+N_Plot = F_R*k*T_0*B_R;
+%Conversion to dB
+N_dB_Plot = ones(1,150001)*10*log10(N_Plot);
+plot(range1,N_dB_Plot,'--')
+%Recieved jamming signal power
+J_Plot = (P_J_absolute*G_RT*G_JR_absolute*Wavelength^2)./((4*pi).^2*range1.^2*L_J_absolute);
+%Conversion to dB
+J_Plot_dB = 10*log10(J_Plot);
+plot(range1,J_Plot_dB)
+%Legend
+legend('S','N','J')
+%Set Axis like plot 10-3
+axis([0 150000 -175 80])
+%Labels
+title('Thermal noise power vs radar-to-target range') 
+ylabel('Power (dBW)')
+xlabel('Radar-to-target range/RWR (m)')
+%%
+%Compute the jamming noise power out of the radar reciever (J_N) at R_RT_test 
+J_N = J_R*(B_R/B_J);
+J_N_dB = 10*log10(J_N);
+%display
+fprintf('\n\nJamming noise power out of noise reciever: %d Watts\n',J_N)
+fprintf('Jamming noise power out of noise reciever: %3.4f dBW\n',J_N_dB)
+%%
+%Compute the interference signal power at R_RT_test
+I = N_Plot + J_N
+I_dB = 10*log10(I);
+fprintf('\n\nInterference signal power: %d\n',I);
+fprintf('Interference signal power: %3.4f dBW\n',I_dB);
+
+%%
+%Plot (2)
+figure(2)
+range1 = 0:1:150000;
+hold on
+%single-pulse target signal power
+J_R_Plot = (P_R*G_RT^2*Wavelength^2*sigma_radar)./((4*pi).^3*range1.^4*L_R);
+%conversion to dB
+J_R_Plot_dB = 10*log10(J_R_Plot);
+plot(range1,J_R_Plot_dB,'r')
+%radar reciever Noise Power 
+N_Plot = F_R*k*T_0*B_R;
+%Conversion to dB
+N_dB_Plot = ones(1,150001)*10*log10(N_Plot);
+plot(range1,N_dB_Plot,'--')
+%Recieved jamming signal power
+J_Plot = (P_J_absolute*G_RT*G_JR_absolute*Wavelength^2)./((4*pi).^2*range1.^2*L_J_absolute);
+%Conversion to dB
+J_Plot_dB = 10*log10(J_Plot);
+plot(range1,J_Plot_dB)
+%Interference Signal Power
+I_Plot = I;
+I_Plot_dB = ones(1,150001)*10*log10(I);
+plot(range1,I_Plot_dB,':')
+
+%Legend
+legend('S','N','J','JN')
+%Set Axis like plot 10-9
+axis([0 150000 -175 80])
+%Labels
+title('Single-pluse target, radar reciever, recieved jamming and interference signal power vs radar-to-target range') 
+ylabel('Power (dBW)')
+xlabel('Radar-to-target range/RWR (m)')
+%%
+%Compute the single-pulse radar signal-to-noise ratio (S/N)_RWR at
+%R_RT_test
+SNR_RWR = (P_R*G_RT*G_RWR_absolute*Wavelength^2)/((4*pi)^2*R_RT_test^2*F_RWR_absolute*k*T_0*B_RWR*L_RWR_absolute);
+SNR_RWR_dB = 10*log10(SNR_RWR);
+fprintf('\n\nSingle-pulse radar signal-to-noise ratio: %d\n',SNR_RWR);
+fprintf('Single-pulse radar signal-to-noise ratio: %3.4f dB\n',SNR_RWR_dB);
+%%
+%Plot (2)
+figure(2)
+Range2 = 0:1:150000;
+%Plot the SNR_dtRWR
+SNR_dtRWR_Plot = ones(1,150001)*10*log10(SNR_dtRWR_absolute);
+plot(Range2,SNR_dtRWR_Plot,':')
+%Plot the SNR
+hold on
+SNR_RWR_Plot = (P_R*G_RT*G_RWR_absolute*Wavelength^2)./((4*pi)^2*Range2.^2*F_RWR_absolute*k*T_0*B_RWR*L_RWR_absolute);
+%Conversion to dB
+SNR_RWR_Plot_dB = 10.*log10(SNR_RWR_Plot);
+plot(Range2,SNR_RWR_Plot_dB,'--')
+%Multiple pulse target SNR, SNR_dt, and SNR
+%Legend
+legend('SNR_d_t_R_W_R','SNR_R_W_R')
+%Set Axis like plot 3-13
+axis([0 150000 -20 80])
+%Labels
+title('S_R_W_R & SNR_d_t_R_W_R vs. the radar-to-target/RWR range') 
+ylabel('Power (dB)')
+xlabel('Radar-to-target/RWR Range (m)')
+%%
+%Compute the minimum detectable signal sensitivity (S_min_dt)
+S_min_dt = N_RWR*SNR_dtRWR_absolute;
+S_min_dt_dB = 10*log10(S_min_dt);
+fprintf('\n\nMinimum detectable signal sensitivity: %d Watts\n',S_min_dt)
+fprintf('Minimum detectable signal sensitivity: %4.3f dBW\n',S_min_dt_dB)
+%%
+%Compute the minimum discernable signal sensitivity (S_min_dis)
+S_min_dis = N_RWR;
+S_min_dis_dB = 10*log10(S_min_dis);
+fprintf('\n\nMinimum discernable signal sensitivity: %d Watts\n',S_min_dis)
+fprintf('Minimum discernable signal sensitivity: %4.3f dBW\n',S_min_dis_dB)
+%%
+%Compute the ratio of the radar warning reciever detection range to the
+%radar detection range (using the result from the previous radar lab)
+
+%%
+%Compute the estimated radar-to-target/RWR range (R_RT) for the recieved
+%single-pulse radar signal power at R_RT_test.
+R_RT = sqrt((P_R*G_RT*G_RWR_absolute*Wavelength^2)/((4*pi)^2*S_RWR*L_RWR_absolute));
+fprintf('\n\nThe estimated radar-to-target/RWR range: %d meters\n',R_RT)
