@@ -107,7 +107,7 @@ axis([0 150000 -175 80])
 %Labels
 title('Thermal noise power vs radar-to-target range') 
 ylabel('Power (dBW)')
-xlabel('Radar-to-target range/RWR (m)')
+xlabel('Radar-to-target range (m)')
 grid on
 %%
 fprintf('\n\n')
@@ -156,7 +156,7 @@ axis([0 150000 -175 80])
 %Labels
 title('Single-pluse target, radar reciever, recieved jamming and interference signal power vs radar-to-target range') 
 ylabel('Power (dBW)')
-xlabel('Radar-to-target range/RWR (m)')
+xlabel('Radar-to-target range (m)')
 grid on
 %%
 %Compute the multiple pulse target signal-to-interference ratio (S/I)_n at
@@ -190,7 +190,7 @@ axis([0 100000 0 90])
 %Labels
 title('MSNR, Detection Threshold, MSIR vs. the radar-to-target/Jammer range') 
 ylabel('Power (dB)')
-xlabel('Radar-to-target/RWR Range (m)')
+xlabel('Radar-to-target Range (m)')
 grid on
 
 %%
@@ -213,23 +213,72 @@ end
 %%
 %Compute the multiple pulse noise jamming-to-target signal ratio (J_N/S)_n
 %at R_RT_test
-
+MJSNR = ((P_J*G_JR_absolute)/L_J_absolute)*(B_R/B_J)*(((4*pi)*R_RT_test^2*L_R)/(P_R*G_RT*sigma_radar*G_sp*G_I));
+MJSNR_dB = 10*log10(MJSNR);
+fprintf('\nCompute the MJSNR: %4.3f absolute\n',MJSNR);
+fprintf('Compute the MJSNR: %4.3f dB\n',MJSNR_dB);
+%%
+%Plot (4)
+figure(4)
+Range4 = 0:1:150000;
+hold on
+%Plot MSIR
+MJSNR_Plot = ((P_J*G_JR_absolute)/L_J_absolute).*(B_R/B_J).*(((4*pi)*Range4.^2*L_R)/(P_R*G_RT*sigma_radar*G_sp*G_I));
+%Conversion to dB
+MJSNR_Plot_dB = 10.*log10(MJSNR_Plot);
+plot(Range4,MJSNR_Plot_dB)
+%Legend
+%Set Axis like plot 10-15
+axis([0 100000 -50 0])
+%Labels
+title('Jamming-to-Signal Ratio as a function of Radar-to-Target/Jammer Range') 
+ylabel('JSR (dB)')
+xlabel('Radar-to-target Range (m)')
+grid on
 %%
 %
 fprintf('\n\nFalse Target Jammer Calculations\n')
 %%
 %Compute the multiple pulse false target jamming-to-noise ratio (J/N)_n at
 %R_RT_test
-
+MFJNR = (P_J*G_JR_absolute*G_RT*Wavelength^2*G_sp*G_I)/((4*pi)^2*R_RT_test^2*F_R*k*T_0*B_R*L_J_absolute);
+MFJNR_dB = 10*log10(MFJNR);
+fprintf('\nCompute the MFJNR: %4.3f absolute\n',MFJNR);
+fprintf('Compute the MFJNR: %4.3f dB\n',MFJNR_dB);
 %%
-%Plot (4)
-
+%Plot (5)
+figure(5)
+Range5 = 0:1:150000;
+hold on
+%Plot the detection threshold
+dt_Plot_dB = ones(1,150001)*10*log10(SNR_dt);
+plot(Range5,dt_Plot_dB,':')
+%Plot the SNR
+MSNR_Plot = (P_R*G_RT^2*Wavelength^2*sigma_radar*G_sp*G_I)./((4*pi)^3*Range5.^4*N_Plot*L_R);
+%Conversion to dB
+MSNR_Plot_dB = 10.*log10(MSNR_Plot);
+plot(Range5,MSNR_Plot_dB,'--')
+%Plot MSIR
+MFJNR_Plot = (P_J*G_JR_absolute*G_RT*Wavelength^2*G_sp*G_I)./((4*pi)^2*Range5.^2*F_R*k*T_0*B_R*L_J_absolute);
+%Conversion to dB
+MFJNR_Plot_dB = 10.*log10(MFJNR_Plot);
+plot(Range3,MFJNR_Plot_dB)
+%Legend
+legend('Detection Threshold','(S/N)_N','(J/N)_N')
+%Set Axis like plot 10-10
+axis([0 100000 0 90])
+%Labels
+title('Multiple-Pulse SNR, detection threshold, and JNR vs Radar-to-Target/Jammer Range') 
+ylabel('Power (dB)')
+xlabel('Radar-to-target Range (m)')
+grid on
 %%
 %Compute the multiple pulse false target jamming-to-target signal ratio
 %(J/S)_n at R_RT_test
 
+
 %%
-%Plot (5)
+%Plot (6)
 
 %%
 %False target detection rage and LOS
