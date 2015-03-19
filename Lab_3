@@ -59,7 +59,7 @@ sigma_radar = 10^(sigma_radar/10);
 disp('Electronic Warfare Lab 3 Calculator')
 %
 %User Inputs
-fprintf('\n Input the characteristics of the self protection jammer')
+fprintf('\nInput the characteristics of the self protection jammer\n')
 P_J = input('\nEnter the peak transmit power in W: ');                                   %10 W
 G_JR = input('Enter the transmit antenna gain in the direction of the radar in dBi: '); %2 dBi
 B_J = input('Enter the jammer noise bandwidth in MHz: ');                              %150 MHz
@@ -110,17 +110,19 @@ ylabel('Power (dBW)')
 xlabel('Radar-to-target range/RWR (m)')
 grid on
 %%
+fprintf('\n\n')
+disp('Noise Jammer calculations')
 %Compute the jamming noise power out of the radar reciever (J_N) at R_RT_test 
 J_N = J_R*(B_R/B_J);
 J_N_dB = 10*log10(J_N);
 %display
-fprintf('\n\nJamming noise power out of noise reciever: %d Watts\n',J_N)
+fprintf('\nJamming noise power out of noise reciever: %d Watts\n',J_N)
 fprintf('Jamming noise power out of noise reciever: %3.4f dBW\n',J_N_dB)
 %%
 %Compute the interference signal power at R_RT_test
 I = N_Plot + J_N;
 I_dB = 10*log10(I);
-fprintf('\n\nInterference signal power: %d\n',I);
+fprintf('\nInterference signal power: %d\n',I);
 fprintf('Interference signal power: %3.4f dBW\n',I_dB);
 
 %%
@@ -147,7 +149,6 @@ plot(range1,J_Plot_dB)
 I_Plot = I;
 I_Plot_dB = ones(1,150001)*10*log10(I);
 plot(range1,I_Plot_dB,':')
-
 %Legend
 legend('S','N','J','JN')
 %Set Axis like plot 10-9
@@ -162,7 +163,7 @@ grid on
 %R_RT_test
 MSIR = (P_R*G_RT^2*Wavelength^2*sigma_radar*G_sp*G_I)/((4*pi)^3*R_RT_test^4*L_R*(I));
 MSIR_dB = 10*log10(MSIR);
-fprintf('\n\nMultiple pulse target SIR: %4.3f absolute\n',MSIR)
+fprintf('\nMultiple pulse target SIR: %4.3f absolute\n',MSIR)
 fprintf('Multiple pulse target SIR: %4.3f dB\n',MSIR_dB)
 %%
 %Plot (3)
@@ -196,3 +197,39 @@ grid on
 %Compute the burnthrough range (R_bt)
 R_bt = sqrt(((P_R*G_RT^2*Wavelength^2*sigma_radar*G_sp*G_I)/((4*pi)*SNR_dt*L_R))*(L_J_absolute/(P_J*G_JR_absolute)));
 fprintf('\nThe burnthrough range is: %4.3f meters\n',R_bt)
+%% 
+%Radar LOS and burnthrough range...
+R_hC = sqrt(2*k_r*R_E*h_R+h_R^2);
+R_hT = sqrt(2*k_r*R_E*h_T+h_T^2);
+R_LOS = R_hC + R_hT;
+fprintf('\nRadar line of sight: %3.3f meters \n\n',R_LOS);
+%Radar is not LOS limited because R_bt < R_LOS
+if R_bt < R_LOS
+    disp('The Radar is not LOS limited for the self-protection noise jammer')
+    fprintf('Because, R_bt is %4.3f meters, which is within the R_LOS of %4.3f meters\n',R_bt,R_LOS)
+else
+    disp('The Radar is LOS limited for the self_protection noise jammer')
+end
+%%
+%Compute the multiple pulse noise jamming-to-target signal ratio (J_N/S)_n
+%at R_RT_test
+
+%%
+%
+fprintf('\n\nFalse Target Jammer Calculations\n')
+%%
+%Compute the multiple pulse false target jamming-to-noise ratio (J/N)_n at
+%R_RT_test
+
+%%
+%Plot (4)
+
+%%
+%Compute the multiple pulse false target jamming-to-target signal ratio
+%(J/S)_n at R_RT_test
+
+%%
+%Plot (5)
+
+%%
+%False target detection rage and LOS
