@@ -1,0 +1,156 @@
+%Name: Jeremy Hong and Alexander Kinkade
+%Date: 3/21/2015
+%Class: EE 4800/6800 Intro to Electronic Warfare
+%Lab 5
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Clean up
+clear
+clc
+close all
+%
+%Constants from lab 1 & 2
+%
+c = 3*10^8;          %Speed of Light 3e8 m/sec
+k = 1.38*10^-23;     %Boltzmann's constant 1.38e-23 watt-second/Kelvin
+T_0 = 290;           %Standard reference temperature T_0 = 290 Kelvin
+R_E = 6371000;       %radius of the Earth R_E = 6371 km
+k_r = 4/3;           %refraction factor k_r = 4/3
+R_RT_test = 100000;  %Test radar-to-target range R_RT_test = 100 km
+R_RJ_test = 150000;  %Test radar-to-jammer range R_RJ_test = 150 km
+%
+%Radar Characteristics from lab 4
+%
+
+P_R = 1000000;       %Peak transmit power P_R = 1 MW
+G_RT = 38;           %Mainbeam gain G_RT = 38 dBi
+G_RJ = 18;           %Antenna gain in the direction of the jammer G_RJ = 18 dBi
+f_c = 3000000000;    %Carrier Frequency f_c = 3 GHz
+G_sp = 2;            %Signal processing gain G_sp = 2       
+G_I = 12;            %Integration gain G_I = 12
+F_R = 4;             %Receiver noise figure F_R = 4 dB
+B_R = 1000000;       %Receiver processing bandwidth B_R = 1 MHz
+L_R = 8;             %Total radar related losses L_R = 8 dB
+SNR_dt = 14;         %Detection threshold SNR_dt = 14 dB
+h_R = 10;            %Height h_R = 10 meters
+%
+%Target Characteristics
+%
+h_T = 5000;          %Altitude h_T = 5000 meters
+sigma_radar = 1;     %radar cross section sigma_radar = 1 m^2
+%
+%Radar Warning Reciever Characteristics from lab 4
+G_RWR = 2;           %Antenna gain in the direction of the radar G_RWR = 2 dBi
+F_RWR = 15;          %Receiver noise figure F_RWR = 15 dB
+B_RWR = 5000000000;  %Reciever bandwidth B_RWR = 5 GHz
+L_RWR = 10;          %Total radar warning receiver-related losses L_RWR = 10 dB
+SNR_dt_RWR = 20;     %Radar warning receiver detection threshold SNR_dt_RWR = 20 dB
+%Support jammer characteristics
+P_J = 1000;          %Peak transmit power P_J = 1000 Watts
+G_JR = 0;            %Transmit antenna gain in the direction of the radar G_JR = 0 dBi
+B_J = 100*10^6;      %Jammer noise bandwidth B_J = 100*10^6 Hz 
+L_J = 13;            %Total jammer-related losses L_J = 13 dB     
+H_J = 10*10^3;       %Height h_J = 10000 km 
+%Pre-Calculations
+%
+Wavelength = c/f_c;  %Wavelength meters (m)
+%
+%Absolute Values dB => Abs
+%
+G_RT = 10^(G_RT/10);
+F_R = 10^(F_R/10);
+L_R = 10^(L_R/10);
+SNR_dt = 10^(SNR_dt/10);
+G_RWR = 10^(G_RWR/10);
+F_RWR = 10^(F_RWR/10);
+L_RWR = 10^(L_RWR/10);
+SNR_dt_RWR = 10^(SNR_dt_RWR/10);
+G_JR = 10^(G_JR/10);
+L_J = 10^(L_J/10);
+G_RJ = 10^(G_RJ/10);
+%G_RJ = G_RT - 40 dB
+G_RT_1 = G_RJ + 10^(40/10);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+G_AJ = input('\nAuxiliary antenna gain in the direction of the jammer G_AJ: ');
+G_AJ = 10^(G_AJ/10);
+%
+%Electronic Support
+%
+R_dt_RWR = sqrt((P_R*G_RT*G_RWR*Wavelength^2)/((4*pi)^2*SNR_dt_RWR*F_RWR*k*T_0*B_RWR*L_RWR));
+fprintf('\nThe baseline radar warning receiver detection rage is: %3.4f meters \n',R_dt_RWR);
+R_dt_RWR_1 = sqrt((P_R*G_RT_1*G_RWR*Wavelength^2)/((4*pi)^2*SNR_dt_RWR*F_RWR*k*T_0*B_RWR*L_RWR));
+fprintf('\nThe baseline radar warning receiver detection rage is: %3.4f meters \n',R_dt_RWR_1);
+B_RWR_1 = (P_R*G_RT*G_RWR*Wavelength^2)/(R_dt_RWR^2*(4*pi)^2*SNR_dt_RWR*F_RWR*k*T_0*L_RWR);
+fprintf('\nThe radar warning receiver bandwidth is: %d Hertz\n',B_RWR_1);
+%
+%Sidelobe Canceler off
+%
+%Compute the recieved jamming signal power (J) at R_RT_test
+J_R = (P_J*G_JR*G_RT*Wavelength^2)/((4*pi)^2*R_RJ_test^2*L_J);
+J_R_dB = 10*log10(J_R);
+%Compute the jamming noise power out of the radar reciever (J_N) at R_RJ_test 
+J_N = J_R*(B_R/B_J);
+J_N_dB = 10*log10(J_N);
+%display
+fprintf('\nJamming noise power out of noise reciever: %d Watts\n',J_N)
+fprintf('Jamming noise power out of noise reciever: %3.4f dBW\n',J_N_dB)
+%Compute the radar receiver thermal noise power (N)
+N = F_R*k*T_0*B_R;
+N_dB = 10*log10(N);
+%display
+fprintf('\nRadar receiever thermal noise power: %d Watts\n',N)
+fprintf('Radar receiever thermal noise power: %3.4f dBW\n',N_dB)
+%Compute the interference signal power at R_RJ_test
+I = N + J_N;
+I_dB = 10*log10(I);
+fprintf('\nInterference signal power: %d\n',I);
+fprintf('Interference signal power: %3.4f dBW\n',I_dB);
+%Compute the multiple pulse target signal-to-interference ratio (S/I)_n at
+%R_RT_test& R_RJ_test
+MSIR = (P_R*G_RT^2*Wavelength^2*sigma_radar*G_sp*G_I)/((4*pi)^3*R_RT_test^4*L_R*(I));
+MSIR_dB = 10*log10(MSIR);
+fprintf('\nMultiple pulse target SIR: %4.3f absolute\n',MSIR)
+fprintf('Multiple pulse target SIR: %4.3f dB\n',MSIR_dB)
+MSIR_1 = (P_R*G_RT^2*Wavelength^2*sigma_radar*G_sp*G_I)/((4*pi)^3*R_RJ_test^4*L_R*(I));
+MSIR_dB_1 = 10*log10(MSIR_1);
+fprintf('\nMultiple pulse target SIR: %4.3f absolute\n',MSIR_1)
+fprintf('Multiple pulse target SIR: %4.3f dB\n',MSIR_dB_1)
+%Compute the burnthrough range (R_bt)
+R_bt = sqrt(((P_R*G_RT*sigma_radar*G_sp*G_I)/((4*pi)*SNR_dt*L_R))*(B_J/B_R)*((L_J)/(P_J*G_JR)));
+fprintf('\nThe burnthrough range is: %4.3f meters\n',R_bt)
+%Compute the burnthrough range (R_bt) @ 500 MHz
+R_bt_1 = sqrt(((P_R*G_RT*sigma_radar*G_sp*G_I)/((4*pi)*SNR_dt*L_R))*(500*10^6/B_R)*((L_J)/(P_J*G_JR)));
+fprintf('\nThe burnthrough range is: %4.3f meters\n',R_bt_1)
+%Compute the jammer transmit power P_J to provide the baseline R_bt at
+%R_RJ_test
+P_J_1 = (R_bt_1^2/(((P_R*G_RT*sigma_radar*G_sp*G_I)/((4*pi)*SNR_dt*L_R))*(500*10^6/B_R)))*(G_JR/L_J);
+fprintf('\nThe Jammer transmit power is: %3.4f Watts\n',P_J_1);
+%Sidelobe Canceler On
+%
+%Compute the residual noise, jamming and thermal power after cancellation
+%(P_z) at R_RJ_test
+P_z = (J_N+N)-(((G_AJ/G_RJ)*J_N^2)/((G_AJ/G_RJ)*J_N+N));
+P_z_dB = 10*log10(P_z);
+fprintf('\nResidual noise, jamming and thermal, power after cancellation: %d Watts\n',P_z)
+fprintf('Residual noise, jamming and thermal, power after cancellation: %4.3f dBW\n',P_z_dB)
+%compute the ratio of the residual noise power to the receiver thermal
+%noise power (P_z/N) at R_RJ_test
+PZNR = P_z/N;
+PZNR_dB = 10*log10(PZNR);
+fprintf('\nRatio of the residual noise power to the receiver thermal noise power: %3.4f absolute\n',PZNR);
+fprintf('Ratio of the residual noise power to the receiver thermal noise power: %3.4f dB\n',PZNR_dB);
+%Compute the cancellation ratio (CR) at R_RJ_test
+CR = (J_N + N)/P_z;
+CR_dB = 10*log10(CR);
+fprintf('\nThe cancellation Ratio: %3.4f absolute\n',CR);
+fprintf('The cancellation Ratio: %3.4f dB\n',CR_dB);
+%Compute (S/I)_n at R_RJ_test
+S = (P_R*G_RT^2*Wavelength^2*sigma_radar)/((4*pi)^3*R_RJ_test^4*L_R);
+SIn = (S*G_I)/P_z;
+SIn_dB = 10*log10(SIn);
+fprintf('\nSIn at R_RJ_test: %3.4f absolute\n',SIn);
+fprintf('SIn at R_RJ_test: : %3.4f dB\n',PZNR_dB);
+%Compute R_bt at R_RJ_test
+R_bt = SIn^(1/4);
+fprintf('\nThe burnthrough range is: %4.3f meters\n',R_bt)
+
